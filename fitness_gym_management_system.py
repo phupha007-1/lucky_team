@@ -279,3 +279,120 @@ membership_df = pd.DataFrame(data)
 display(membership_df.head())
 
 print("\nจำนวนข้อมูล:",len(membership_df))
+
+# PART 7 : BUSINESS QUESTIONS - PANDAS
+from google.colab import auth
+from google.cloud import bigquery
+
+auth.authenticate_user()
+project_id = 'deadlinesurvivorr'
+client = bigquery.Client(project=project_id)
+query = """
+    SELECT *
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+"""
+membership_df = client.query(query).to_dataframe()
+# คำถามที่ 1 : บริการประเภทใดสร้างรายได้รวมมากที่สุด?
+q1_pandas = (
+    membership_df
+    .groupby("service_type")
+    .agg(total_revenue=("price", "sum"))
+    .sort_values("total_revenue", ascending=False)
+    .reset_index()
+    .head(1)
+)
+print("QUESTION 1")
+display(q1_pandas)
+
+# คำถามที่ 2 : แต่ละบริการมีจำนวนการจองและรายได้รวมเท่าไร?
+q2_pandas = (
+    membership_df
+    .groupby("service_type")
+    .agg(
+        total_bookings=("booking_id", "count"),
+        total_revenue=("price", "sum")
+    )
+    .sort_values("total_revenue", ascending=False)
+    .reset_index()
+)
+print("\nQUESTION 2")
+display(q2_pandas)
+
+# คำถามที่ 3 : น้ำหนักเฉลี่ยของสมาชิกแต่ละบริการเท่าไร?
+q3_pandas = (
+    membership_df
+    .groupby("service_type")
+    .agg(avg_weight=("weight_kg", lambda x: round(x.mean(), 2)))
+    .sort_values("avg_weight", ascending=False)
+    .reset_index()
+)
+print("QUESTION 3")
+display(q3_pandas)
+
+# คำถามที่ 4 : บริการประเภทใดมีค่าเฉลี่ยรายได้ต่อการจองสูงสุด?
+q4_pandas = (
+    membership_df
+    .groupby("service_type")
+    .agg(avg_revenue_per_booking=("price", lambda x: round(x.mean(), 2)))
+    .sort_values("avg_revenue_per_booking", ascending=False)
+    .reset_index()
+    .head(1)
+)
+print("QUESTION 4")
+display(q4_pandas)
+
+# คำถามที่ 5 : บริการประเภทใดมีสัดส่วนรายได้ (Revenue Share %)คิดเป็นกี่เปอร์เซ็นต์ของรายได้รวมทั้งหมด?
+total_sum = membership_df['price'].sum()
+q6_pandas = (
+    membership_df
+    .groupby("service_type")
+    .agg(
+        total_revenue=("price", "sum"),
+        revenue_share_pct=("price", lambda x: round((x.sum() / total_sum) * 100, 2))
+    )
+    .sort_values("revenue_share_pct", ascending=False)
+    .reset_index()
+)
+print("\nQUESTION 5")
+display(q6_pandas)
+
+# คำถามที่ 6 : หากจัดกลุ่มตามบริการ ราคาตั๋วที่ถูกที่สุดและแพงที่สุดของแต่ละบริการคือเท่าไร?
+q7_pandas = (
+    membership_df
+    .groupby("service_type")
+    .agg(
+        min_price=("price", "min"),
+        max_price=("price", "max")
+    )
+    .reset_index()
+)
+print("\nQUESTION 6")
+display(q7_pandas)
+
+# คำถามที่ 7 : ลูกค้าที่มีน้ำหนักเกิน 70 kg นิยมจองบริการประเภทใดมากที่สุด?
+q10_pandas = (
+    membership_df[membership_df['weight_kg'] > 70]
+    .groupby("service_type")
+    .agg(booking_count=("booking_id", "count"))
+    .sort_values("booking_count", ascending=False)
+    .reset_index()
+    .head(1)
+)
+print("\nQUESTION 7")
+display(q10_pandas)
+
+# คำถามที่ 8 : เปรียบเทียบค่ามัธยฐาน (Median) ของราคาระหว่างบริการต่างๆ เพื่อดูระดับราคาของบริการส่วนใหญ่
+q12_pandas = (
+    membership_df
+    .groupby("service_type")
+    .agg(median_price=("price", "median"))
+    .reset_index()
+)
+print("\nQUESTION 8")
+display(q12_pandas)
+
+# PART 8 : SQLITE DATABASE
+conn = sqlite3.connect("fitness_gym.db")
+membership_df.to_sql("gym_memberships",conn,if_exists="replace",index=False)
+print("บันทึกข้อมูลลง SQLite สำเร็จ")
+     
