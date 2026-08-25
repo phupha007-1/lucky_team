@@ -63,3 +63,39 @@ class Package:
             f"Price: {self.price} บาท | "
             f"Max Hours: {self.max_hours}"
         )
+
+        # PART 4 : CLASS MEMBERSHIPPACKAGE
+class MembershipPackage:
+    def __init__(
+        self,
+        booking_id,
+        member,
+        package,
+        hours,
+        service_type,
+        booking_date
+    ):
+        self.booking_id = booking_id
+        self.member = member
+        self.package = package
+        self.hours = hours
+        self.service_type = service_type
+        self.booking_date = booking_date
+        self.status = "Pending"
+    def calculate_price(self):
+        # คำนวณส่วนลด 10% หากสมาชิกเป็น VIP
+        base_price = self.package.price
+        if self.member.is_vip:
+            return round(base_price * 0.90, 2)
+        return round(base_price, 2)
+    def mark_done(self):
+        self.status = "Completed"
+    def __str__(self):
+        return (
+            f"Booking ID: {self.booking_id} | "
+            f"Member: {self.member.name} | "
+            f"Package: {self.package.package_name} | "
+            f"Service: {self.service_type} | "
+            f"Price: {self.calculate_price()} | "
+            f"Status: {self.status}"
+        )
