@@ -32,3 +32,34 @@ class Member:
             f"Weight: {self.weight_kg} kg | "
             f"Type: {self.get_member_type()}"
         )
+
+        # PART 3 : CLASS PACKAGE
+class Package:
+    def __init__(
+        self,
+        package_id,
+        package_name,
+        price,
+        max_hours,
+        duration_days
+    ):
+        self.package_id = package_id
+        self.package_name = package_name
+        self.price = price
+        self.max_hours = max_hours
+        self.duration_days = duration_days
+    def get_package_info(self):
+        return {
+            "package_id": self.package_id,
+            "package_name": self.package_name,
+            "price": self.price,
+            "max_hours": self.max_hours,
+            "duration_days": self.duration_days
+        }
+    def __str__(self):
+        return (
+            f"Package ID: {self.package_id} | "
+            f"Package: {self.package_name} | "
+            f"Price: {self.price} บาท | "
+            f"Max Hours: {self.max_hours}"
+        )
