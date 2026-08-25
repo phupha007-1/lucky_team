@@ -52,15 +52,7 @@ class Package:
 
         # PART 4 : CLASS MEMBERSHIPPACKAGE
 class MembershipPackage:
-    def __init__(
-        self,
-        booking_id,
-        member,
-        package,
-        hours,
-        service_type,
-        booking_date
-    ):
+    def __init__(self,booking_id,member,package,hours,service_type,booking_date):
         self.booking_id = booking_id
         self.member = member
         self.package = package
