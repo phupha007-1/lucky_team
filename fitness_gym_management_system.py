@@ -253,3 +253,29 @@ for i in range(1, 301):
 print("สร้างข้อมูลสำเร็จ")
 print("Members:", len(members_300))
 print("Membership Packages:", len(memberships_300))
+
+# PART 6 : CREATE DATAFRAME
+data = []
+for booking in memberships_300:
+    data.append({
+        "booking_id": booking.booking_id,
+        "member_id": booking.member.member_id,
+        "name": booking.member.name,
+        "age": booking.member.age,
+        "weight_kg": booking.member.weight_kg,
+        "is_vip": booking.member.is_vip,
+        "package_id": booking.package.package_id,
+        "package_name": booking.package.package_name,
+        "price": booking.calculate_price(),
+        "hours": booking.hours,
+        "service_type": booking.service_type,
+        "booking_date": booking.booking_date.strftime("%Y-%m-%d"),
+        "status": booking.status
+    })
+
+membership_df = pd.DataFrame(data)
+
+# วิธีที่ 1 (แนะนำมากที่สุด): แสดงผลแบบตารางบน Jupyter / Colab
+display(membership_df.head())
+
+print("\nจำนวนข้อมูล:",len(membership_df))
