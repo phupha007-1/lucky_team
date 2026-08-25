@@ -7,14 +7,7 @@ import matplotlib.pyplot as plt
 
 # PART 2 : CLASS MEMBER
 class Member:
-    def __init__(
-        self,
-        member_id,
-        name,
-        age,
-        weight_kg,
-        is_vip=False
-        ):
+    def __init__(self,member_id,name,age,weight_kg,is_vip=False):
         self.member_id = member_id
         self.name = name
         self.age = age
