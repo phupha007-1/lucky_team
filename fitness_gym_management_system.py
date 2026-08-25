@@ -101,112 +101,28 @@ class MembershipPackage:
         )
     # PART 5 : GENERATE 300 DATA
 first_names = [
-    "ธนกฤต",
-    "ณัฐวุฒิ",
-    "พชร",
-    "ภูริณัฐ",
-    "กิตติพงศ์",
-    "วรากร",
-    "ธนภัทร",
-    "ภัทรพล",
-    "ณัฐพล",
-    "ศุภกร",
-    "ก้องภพ",
-    "ชยพล",
-    "รัชชานนท์",
-    "ธีรภัทร",
-    "ปวริศ",
-    "กรวิชญ์",
-    "นนทกร",
-    "ภาคภูมิ",
-    "อัครพล",
-    "สิรวิชญ์",
-    "พิมพ์ชนก",
-    "ชนากานต์",
-    "ณิชาภัทร",
-    "ศิริพร",
-    "กัญญารัตน์",
-    "ชลธิชา",
-    "ปุณณภา",
-    "ธัญชนก",
-    "ณัฐธิดา",
-    "พิชชาภา",
-    "วริศรา",
-    "สุภัสสรา",
-    "กมลชนก",
-    "ปภาวรินทร์",
-    "อริสรา",
-    "พัชราภา",
-    "นภัสสร",
-    "ชญานิศ",
-    "กุลธิดา",
-    "รินรดา"
+    "ธนกฤต", "ณัฐวุฒิ", "พชร", "ภูริณัฐ", "กิตติพงศ์", "วรากร", "ธนภัทร", "ภัทรพล", "ณัฐพล", "ศุภกร",
+    "ก้องภพ", "ชยพล", "รัชชานนท์", "ธีรภัทร", "ปวริศ", "กรวิชญ์", "นนทกร", "ภาคภูมิ", "อัครพล", "สิรวิชญ์",
+    "พิมพ์ชนก", "ชนากานต์", "ณิชาภัทร", "ศิริพร", "กัญญารัตน์", "ชลธิชา", "ปุณณภา", "ธัญชนก", "ณัฐธิดา", "พิชชาภา",
+    "วริศรา", "สุภัสสรา", "กมลชนก", "ปภาวรินทร์", "อริสรา", "พัชราภา", "นภัสสร", "ชญานิศ", "กุลธิดา", "รินรดา"
 ]
 last_names = [
-    "ศรีสุวรรณ",
-    "วัฒนกุล",
-    "เจริญชัย",
-    "พัฒนานนท์",
-    "วงศ์วัฒนะ",
-    "สุวรรณดี",
-    "บุญญฤทธิ์",
-    "ชัยวัฒน์",
-    "รัตนกุล",
-    "ศุภกิจ",
-    "ธนากุล",
-    "วัฒนชัย",
-    "เจริญสุข",
-    "พงศ์ไพบูลย์",
-    "สิริวัฒน์",
-    "กิตติธร",
-    "อนันต์ชัย",
-    "รุ่งเรือง",
-    "พัฒนกุล",
-    "ศรีวัฒนานนท์"
+    "ศรีสุวรรณ", "วัฒนกุล", "เจริญชัย", "พัฒนานนท์", "วงศ์วัฒนะ", "สุวรรณดี", "บุญญฤทธิ์", "ชัยวัฒน์", "รัตนกุล", "ศุภกิจ",
+    "ธนากุล", "วัฒนชัย", "เจริญสุข", "พงศ์ไพบูลย์", "สิริวัฒน์", "กิตติธร", "อนันต์ชัย", "รุ่งเรือง", "พัฒนกุล", "ศรีวัฒนานนท์"
 ]
+
 def generate_name():
-    return (
-        random.choice(first_names)
-        + " "
-        + random.choice(last_names)
-    )
+    return random.choice(first_names) + " " + random.choice(last_names)
 def generate_booking_date():
     start_date = datetime(2026, 1, 1)
-    random_days = random.randint(
-        0,
-        364
-    )
-    return start_date + timedelta(
-        days=random_days
-    )
+    random_days = random.randint(0, 364)
+    return start_date + timedelta(days=random_days)
 packages = [
-    Package(
-        1,
-        "Basic",
-        1200,
-        10,
-        30
-    ),
-    Package(
-        2,
-        "Premium",
-        2500,
-        20,
-        30
-    ),
-    Package(
-        3,
-        "VIP",
-        5000,
-        50,
-        60
-    )
+    Package(1, "Basic", 1200, 10, 30),
+    Package(2, "Premium", 2500, 20, 30),
+    Package(3, "VIP", 5000, 50, 60)
 ]
-services = [
-    "Gym",
-    "Personal Training",
-    "Group Class"
-]
+services = ["Gym", "Personal Training", "Group Class"]
 members_300 = []
 member_data = {}
 for i in range(1, 301):
@@ -214,30 +130,18 @@ for i in range(1, 301):
         member_id=i,
         name=generate_name(),
         age=random.randint(18, 40),
-        weight_kg=round(
-            random.uniform(45, 100),
-            1
-        ),
-        is_vip=random.choice(
-            [True, False]
-        )
+        weight_kg=round(random.uniform(45, 100), 1),
+        is_vip=random.choice([True, False])
     )
     members_300.append(member)
     member_data[i] = member
+
 memberships_300 = []
 for i in range(1, 301):
-    selected_member = random.choice(
-        members_300
-    )
-    selected_package = random.choice(
-        packages
-    )
-    selected_service = random.choice(
-        services
-    )
-    selected_hours = random.choice(
-        [1, 1.5, 2, 2.5, 3]
-    )
+    selected_member = random.choice(members_300)
+    selected_package = random.choice(packages)
+    selected_service = random.choice(services)
+    selected_hours = random.choice([1, 1.5, 2, 2.5, 3])
     membership = MembershipPackage(
         booking_id=i,
         member=selected_member,
@@ -247,12 +151,7 @@ for i in range(1, 301):
         booking_date=generate_booking_date()
     )
     membership.mark_done()
-    memberships_300.append(
-        membership
-    )
-print("สร้างข้อมูลสำเร็จ")
-print("Members:", len(members_300))
-print("Membership Packages:", len(memberships_300))
+    memberships_300.append(membership)
 
 # PART 6 : CREATE DATAFRAME
 data = []
