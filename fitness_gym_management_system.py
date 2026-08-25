@@ -28,14 +28,7 @@ class Member:
 
         # PART 3 : CLASS PACKAGE
 class Package:
-    def __init__(
-        self,
-        package_id,
-        package_name,
-        price,
-        max_hours,
-        duration_days
-    ):
+    def __init__(self,package_id,package_name,price,max_hours,duration_days):
         self.package_id = package_id
         self.package_name = package_name
         self.price = price
