@@ -494,9 +494,9 @@ plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
 
-# --------------------------------------------
+
 # BUSINESS SUMMARY & INSIGHTS (สรุปผลเชิงธุรกิจ)
-# --------------------------------------------
+
 print("\n" + "="*50)
 print("          BUSINESS SUMMARY & INSIGHTS")
 print("="*50)
@@ -561,3 +561,545 @@ find_member(999999)
 find_package(999999)
 validate_hours(-5)
 print(validate_hours(2))
+
+# PART 13 : FITNESS DASHBOARD & CHECK-IN SYSTEM
+def dashboard_report(report_type):
+    data = membership_df.copy()
+    data["booking_date"] = pd.to_datetime(data["booking_date"])
+    # DAILY
+    if report_type == "1":
+        date_input = input("กรอกวันที่ (YYYY-MM-DD): ").strip()
+        try:
+            selected_date = pd.to_datetime(date_input, format="%Y-%m-%d")
+        except ValueError:
+            print("รูปแบบวันที่ไม่ถูกต้อง")
+            return
+        report = data[data["booking_date"].dt.date == selected_date.date()]
+        title = f"วันที่ {selected_date.date()}"
+    # WEEKLY
+    elif report_type == "2":
+        date_input = input("กรอกวันที่ในสัปดาห์ (YYYY-MM-DD): ").strip()
+        try:
+            selected_date = pd.to_datetime(date_input, format="%Y-%m-%d")
+        except ValueError:
+            print("รูปแบบวันที่ไม่ถูกต้อง")
+            return
+        start_date = selected_date - pd.Timedelta(days=selected_date.weekday())
+        end_date = start_date + pd.Timedelta(days=6)
+        report = data[(data["booking_date"] >= start_date) & (data["booking_date"] < end_date + pd.Timedelta(days=1))]
+        title = f"สัปดาห์ {start_date.date()} ถึง {end_date.date()}"
+    # MONTHLY
+    elif report_type == "3":
+        try:
+            year = int(input("กรอกปี: "))
+            month = int(input("กรอกเดือน (1-12): "))
+        except ValueError:
+            print("กรุณากรอกตัวเลข")
+            return
+        if month < 1 or month > 12:
+            print("เดือนไม่ถูกต้อง")
+            return
+        report = data[(data["booking_date"].dt.year == year) & (data["booking_date"].dt.month == month)]
+        title = f"เดือน {month}/{year}"
+    else:
+        print("กรุณาเลือก 1, 2 หรือ 3")
+        return
+
+    # SUMMARY
+    total_bookings = len(report)
+    total_revenue = report["price"].sum()
+    average_revenue = report["price"].mean() if total_bookings > 0 else 0
+    vip_count = report["is_vip"].sum() if total_bookings > 0 else 0
+    general_count = total_bookings - vip_count
+
+    print("\n====================================")
+    print("    FITNESS MEMBERSHIP DASHBOARD")
+    print("====================================")
+    print(f"ช่วงเวลา: {title}")
+    print(f"จำนวนการจอง: {total_bookings}")
+    print(f"รายได้รวม: {total_revenue:,.2f} บาท")
+    print(f"รายได้เฉลี่ย: {average_revenue:,.2f} บาท")
+    print(f"VIP: {vip_count}")
+    print(f"General: {general_count}")
+    print("====================================")
+
+    if total_bookings > 0:
+        service_summary = (
+            report.groupby("service_type")
+            .agg(bookings=("booking_id", "count"), revenue=("price", "sum"))
+            .sort_values("revenue", ascending=False)
+        )
+        print("\nSERVICE SUMMARY")
+        display(service_summary)
+    else:
+        print("\nไม่มีข้อมูลในช่วงเวลาที่เลือก")
+
+def dashboard_menu():
+    while True:
+        print("\n==============================")
+        print("      FITNESS DASHBOARD")
+        print("==============================")
+        print("1. รายวัน")
+        print("2. รายสัปดาห์")
+        print("3. รายเดือน")
+        print("0. ออกจาก Dashboard")
+        choice = input("เลือกช่วงเวลา: ").strip()
+        if choice == "0":
+            print("ออกจาก Dashboard")
+            break
+        dashboard_report(choice)
+
+def view_all_packages():
+    print("\n====================================")
+    print("          PACKAGE INFORMATION")
+    print("====================================")
+    print(f"{'ID':<5}{'Package':<15}{'Price':<12}{'Max Hours':<12}{'Duration':<12}")
+    print("-" * 56)
+    for package in packages:
+        print(f"{package.package_id:<5}{package.package_name:<15}{package.price:,.2f} บาท{'':<3}{package.max_hours:<12}{package.duration_days} days")
+    print("====================================")
+
+def search_booking():
+    global membership_df
+    try:
+        booking_id = int(input("\nกรอก Booking ID: "))
+        result = membership_df[membership_df["booking_id"] == booking_id]
+        if result.empty:
+            print("❌ ไม่พบข้อมูลการจอง")
+        else:
+            booking = result.iloc[0]
+            for p in packages:
+                if p.package_id == booking['package_id']:
+                    original_price = float(p.price)
+                    break
+            is_vip_bool = bool(booking['is_vip'])
+            discount = original_price * 0.10 if is_vip_bool else 0.0
+            final_price = original_price - discount
+            print("\n====================================")
+            print("          BOOKING INFORMATION")
+            print("====================================")
+            print(f"Booking ID   : {booking['booking_id']}")
+            print(f"Member ID    : {booking['member_id']}")
+            print(f"ชื่อสมาชิก   : {booking['name']}")
+            print(f"อายุ         : {booking['age']} ปี")
+            print(f"น้ำหนัก      : {booking['weight_kg']} kg")
+            print(f"VIP          : {'ใช่' if is_vip_bool else 'ไม่ใช่'}")
+            print("------------------------------------")
+            print(f"Package ID   : {booking['package_id']}")
+            print(f"Package      : {booking['package_name']}")
+            print(f"Service      : {booking['service_type']}")
+            print(f"จำนวนชั่วโมง : {booking['hours']} ชั่วโมง")
+            print("------------------------------------")
+            print(f"ราคาเต็ม     : {original_price:,.2f} บาท")
+            print(f"ส่วนลด VIP   : {discount:,.2f} บาท")
+            print(f"ราคาสุทธิ    : {final_price:,.2f} บาท")
+            print(f"วันที่จอง    : {booking['booking_date']}")
+            print(f"สถานะ        : {booking['status']}")
+            print("====================================")
+    except ValueError:
+        print("❌ Booking ID ต้องเป็นตัวเลข")
+
+def save_data():
+    global membership_df
+    membership_df.to_csv("gym_membership_data.csv", index=False, encoding="utf-8-sig")
+    membership_df.to_sql("gym_memberships", conn, if_exists="replace", index=False)
+
+# PART 14 : ADD NEW BOOKING
+def add_new_booking():
+    global membership_df
+    try:
+        # 1. เลือก Member
+        member_id = int(input("\nกรอก Member ID: "))
+        if member_id not in member_data:
+            print("❌ ไม่พบ Member ID")
+            return
+        selected_member = member_data[member_id]
+        # 2. ตรวจสอบ VIP
+        is_vip_member = bool(selected_member.is_vip)
+        # 3. แสดง Package
+        print("\n====================================")
+        print("             PACKAGE")
+        print("====================================")
+        for package in packages:
+            print(f"{package.package_id} - {package.package_name} - {package.price:,.2f} บาท")
+        print("====================================")
+        # 4. เลือก Package
+        package_id = int(input("กรอก Package ID: "))
+        selected_package = find_package(package_id)
+        if selected_package is None:
+            print("❌ ไม่พบ Package ID")
+            return
+        # 5. เลือก Service
+        print("\n====================================")
+        print("           SERVICE TYPE")
+        print("====================================")
+        print("1. Gym")
+        print("2. Personal Training")
+        print("3. Group Class")
+        service_choice = input("เลือกประเภทบริการ: ").strip()
+        if service_choice == "1":
+            service_type = "Gym"
+        elif service_choice == "2":
+            service_type = "Personal Training"
+        elif service_choice == "3":
+            service_type = "Group Class"
+        else:
+            print("❌ ประเภทบริการไม่ถูกต้อง")
+            return
+        # 6. จำนวนชั่วโมง
+        hours = float(input("จำนวนชั่วโมง: "))
+        if hours <= 0:
+            print("❌ จำนวนชั่วโมงต้องมากกว่า 0")
+            return
+        # 7. วันที่จอง
+        booking_date = input("วันที่จอง (YYYY-MM-DD): ").strip()
+        # 8. สร้าง Booking ID
+        if len(memberships_300) > 0:
+            new_booking_id = max(booking.booking_id for booking in memberships_300) + 1
+        else:
+            new_booking_id = 1
+        # 9. สร้าง Booking Object
+        new_booking = MembershipPackage(
+            booking_id=new_booking_id,
+            member=selected_member,
+            package=selected_package,
+            hours=hours,
+            service_type=service_type,
+            booking_date=booking_date
+        )
+        # 10-13. คำนวณส่วนลด
+        original_price = float(selected_package.price)
+        discount = round(original_price * 0.10, 2) if is_vip_member else 0.0
+        final_price = round(original_price - discount, 2)
+        # 14. อัปเดตราคาใน Booking
+        new_booking.price = final_price
+        # 15. แสดงสรุปราคา
+        print("\n====================================")
+        print("          PRICE SUMMARY")
+        print("====================================")
+        print(f"ราคาเต็ม       : {original_price:,.2f} บาท")
+        print(f"ส่วนลด VIP     : {discount:,.2f} บาท")
+        print(f"ราคาสุทธิ      : {final_price:,.2f} บาท")
+        print("====================================")
+        # 16. เพิ่ม Booking เข้า List
+        memberships_300.append(new_booking)
+        # 17. สร้าง DataFrame
+        new_data = pd.DataFrame([{
+            "booking_id": new_booking.booking_id,
+            "member_id": selected_member.member_id,
+            "name": selected_member.name,
+            "age": selected_member.age,
+            "weight_kg": selected_member.weight_kg,
+            "is_vip": is_vip_member,
+            "package_id": selected_package.package_id,
+            "package_name": selected_package.package_name,
+            "original_price": original_price,
+            "discount": discount,
+            "price": final_price,
+            "hours": new_booking.hours,
+            "service_type": new_booking.service_type,
+            "booking_date": str(booking_date),
+            "status": new_booking.status
+        }])
+        # 18. เพิ่มลง membership_df
+        membership_df = pd.concat([membership_df, new_data], ignore_index=True)
+        # 19. บันทึก CSV
+        membership_df.to_csv("gym_membership_data.csv", index=False, encoding="utf-8-sig")
+        # 20. บันทึก SQLite
+        try:
+            # แปลงคอลัมน์ booking_date เป็น string ก่อนลง SQL ป้องกัน Error Timestamp
+            temp_df = membership_df.copy()
+            temp_df["booking_date"] = temp_df["booking_date"].astype(str)
+            temp_df.to_sql(
+                "gym_memberships",
+                conn,
+                if_exists="replace",
+                index=False
+            )
+        except Exception as e:
+            print(f"⚠️ SQLite ไม่สำเร็จ: {e}")
+        # 21. แสดงผล Booking
+        print("\n====================================")
+        print("        BOOKING SUCCESS")
+        print("====================================")
+        print(f"Booking ID : {new_booking.booking_id}")
+        print(f"Member ID  : {selected_member.member_id}")
+        print(f"ชื่อสมาชิก : {selected_member.name}")
+        print(f"VIP        : {'ใช่' if is_vip_member else 'ไม่ใช่'}")
+        print(f"Package    : {selected_package.package_name}")
+        print(f"Service    : {service_type}")
+        print(f"ราคาเต็ม   : {original_price:,.2f} บาท")
+        print(f"ส่วนลด VIP : {discount:,.2f} บาท")
+        print(f"ราคาสุทธิ  : {final_price:,.2f} บาท")
+        print(f"วันที่จอง   : {booking_date}")
+        print("====================================")
+    except ValueError:
+        print("❌ กรุณากรอกข้อมูลให้ถูกต้อง")
+    except Exception as e:
+        print(f"❌ เกิดข้อผิดพลาด: {e}")
+
+# PART 15 : CHECK-IN / CHECK-OUT SYSTEM
+import warnings
+warnings.filterwarnings('ignore', category=FutureWarning)
+
+checkin_df = pd.DataFrame(columns=[
+    "member_id", "name", "package_name", "service_type",
+    "checkin_time", "checkout_time", "hours_used", "status"
+])
+
+def check_package_expiry(member_id):
+    member_bookings = membership_df[membership_df["member_id"] == member_id]
+    if member_bookings.empty:
+        return False, None, "ไม่พบข้อมูล Package ของสมาชิก"
+    latest_booking = member_bookings.iloc[-1]
+    package_id = latest_booking["package_id"]
+    selected_package = None
+    for package in packages:
+        if package.package_id == package_id:
+            selected_package = package
+            break
+    if selected_package is None:
+        return False, None, "ไม่พบข้อมูล Package"
+    booking_date = pd.to_datetime(latest_booking["booking_date"])
+    expiry_date = booking_date + timedelta(days=selected_package.duration_days)
+    current_date = datetime.now()
+    if current_date > expiry_date:
+        return False, latest_booking, f"Package หมดอายุแล้ว ({expiry_date.strftime('%Y-%m-%d')})"
+    return True, latest_booking, f"Package ใช้งานได้ถึง {expiry_date.strftime('%Y-%m-%d')}"
+
+def check_in():
+    global checkin_df
+    try:
+        member_id = int(input("\nกรอก Member ID: "))
+        if member_id not in member_data:
+            print("❌ ไม่พบสมาชิก")
+            return
+        active_checkin = checkin_df[(checkin_df["member_id"] == member_id) & (checkin_df["status"] == "Checked In")]
+        if not active_checkin.empty:
+            print("⚠️ สมาชิกคนนี้ Check-in อยู่แล้ว")
+            return
+        is_valid, booking, message = check_package_expiry(member_id)
+        if not is_valid:
+            print(f"❌ {message}")
+            return
+        print(f"✅ {message}")
+        member = member_data[member_id]
+        checkin_time = datetime.now()
+        new_row = pd.DataFrame([{
+            "member_id": member_id,
+            "name": member.name,
+            "package_name": booking["package_name"],
+            "service_type": booking["service_type"],
+            "checkin_time": checkin_time,
+            "checkout_time": None,
+            "hours_used": 0,
+            "status": "Checked In"
+        }])
+        checkin_df = pd.concat([checkin_df, new_row], ignore_index=True)
+        print("\n====================================")
+        print("          CHECK-IN SUCCESS")
+        print("====================================")
+        print(f"Member ID    : {member_id}")
+        print(f"ชื่อสมาชิก   : {member.name}")
+        print(f"Package      : {booking['package_name']}")
+        print(f"Service      : {booking['service_type']}")
+        print(f"เวลาเข้า     : {checkin_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print("สถานะ        : Checked In")
+        print("====================================")
+    except ValueError:
+        print("❌ Member ID ต้องเป็นตัวเลข")
+
+def check_out():
+    global checkin_df
+    try:
+        member_id = int(input("\nกรอก Member ID: "))
+        active_checkin = checkin_df[(checkin_df["member_id"] == member_id) & (checkin_df["status"] == "Checked In")]
+        if active_checkin.empty:
+            print("❌ ไม่พบข้อมูล Check-in ของสมาชิก")
+            return
+        index = active_checkin.index[-1]
+        checkin_time = pd.to_datetime(checkin_df.loc[index, "checkin_time"])
+        checkout_time = datetime.now()
+        time_used = checkout_time - checkin_time
+        hours_used = round(time_used.total_seconds() / 3600, 2)
+        checkin_df.loc[index, "checkout_time"] = checkout_time
+        checkin_df.loc[index, "hours_used"] = hours_used
+        checkin_df.loc[index, "status"] = "Completed"
+        print("\n====================================")
+        print("          CHECK-OUT SUCCESS")
+        print("====================================")
+        print(f"Member ID    : {member_id}")
+        print(f"เวลาเข้า     : {checkin_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"เวลาออก      : {checkout_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"เวลาที่ใช้จริง : {hours_used:.2f} ชั่วโมง")
+        print("สถานะ        : Completed")
+        print("====================================")
+    except ValueError:
+        print("❌ Member ID ต้องเป็นตัวเลข")
+
+def view_checkin_history():
+    if checkin_df.empty:
+        print("\n❌ ยังไม่มีประวัติการเข้า-ออก")
+        return
+    print("\n====================================")
+    print("     CHECK-IN / CHECK-OUT HISTORY")
+    print("====================================")
+    for _, row in checkin_df.iterrows():
+        print(f"\nMember ID    : {row['member_id']}")
+        print(f"ชื่อสมาชิก   : {row['name']}")
+        print(f"Package      : {row['package_name']}")
+        print(f"Service      : {row['service_type']}")
+        print(f"เวลาเข้า     : {row['checkin_time']}")
+        if pd.notna(row["checkout_time"]):
+            print(f"เวลาออก      : {row['checkout_time']}")
+        else:
+            print("เวลาออก      : ยังไม่ได้ Check-out")
+        print(f"เวลาที่ใช้    : {float(row['hours_used']):.2f} ชั่วโมง")
+        print(f"สถานะ        : {row['status']}")
+        print("------------------------------------")
+    print("====================================")
+
+def walk_in_checkin():
+    global checkin_df
+    print("\n====================================")
+    print("          WALK-IN CHECK-IN")
+    print("====================================")
+    name = input("กรอกชื่อลูกค้า: ").strip()
+    if not name:
+        print("❌ กรุณากรอกชื่อลูกค้า")
+        return
+    print("เลือกบริการ: 1. Gym (150฿) | 2. Personal Training (500฿) | 3. Group Class (300฿)")
+    service_choice = input("เลือกบริการ (1-3): ").strip()
+
+    service_info = {
+        "1": ("Gym", 150),
+        "2": ("Personal Training", 500),
+        "3": ("Group Class", 300)
+    }
+    service_type, price = service_info.get(service_choice, ("Gym", 150))
+
+    new_id = 9900 + len(checkin_df) + 1
+    checkin_time = datetime.now()
+
+    new_row = pd.DataFrame([{
+        "member_id": new_id,
+        "name": f"[Walk-in] {name}",
+        "package_name": "Day Pass",
+        "service_type": service_type,
+        "checkin_time": checkin_time,
+        "checkout_time": None,
+        "hours_used": 0,
+        "status": "Checked In"
+    }])
+
+    checkin_df = pd.concat([checkin_df, new_row], ignore_index=True)
+
+    print("\n====================================")
+    print("      WALK-IN CHECK-IN SUCCESS")
+    print("====================================")
+    print(f"Member ID (Temp) : {new_id}")
+    print(f"ชื่อลูกค้า       : [Walk-in] {name}")
+    print(f"Package          : Day Pass")
+    print(f"Service          : {service_type}")
+    print(f"ราคาชำระ         : {price:,} บาท")
+    print(f"เวลาเข้า         : {checkin_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print("====================================")
+
+# PART 16 : SUMMARY REPORT
+total_bookings = len(membership_df)
+total_revenue = membership_df["price"].sum()
+average_price = membership_df["price"].mean()
+vip_bookings = membership_df["is_vip"].sum()
+print("================================")
+print("      GYM MEMBERSHIP REPORT")
+print("================================")
+print(f"Total Bookings: {total_bookings}")
+print(f"Total Revenue: {total_revenue:,.2f} Baht")
+print(f"Average Price: {average_price:,.2f} Baht")
+print(f"VIP Bookings: {vip_bookings}")
+print("================================")
+
+# PART 100 : EXPORT CSV
+membership_df.to_csv(
+    "gym_membership_data.csv",
+    index=False,
+    encoding="utf-8-sig")
+print("Export CSV สำเร็จ")
+
+# MAIN MENU
+def main_menu():
+    while True:
+        print("\n====================================")
+        print("          FITNESS GYM SYSTEM")
+        print("====================================")
+        print("1. สมัครสมาชิก")
+        print("2. ใช้บริการ / จอง Package")
+        print("3. ดู Package ทั้งหมด")
+        print("4. ค้นหาข้อมูลการจอง")
+        print("5. Service & Revenue Dashboard")
+        print("6. Check-in")
+        print("7. Check-out")
+        print("8. ดูประวัติการเข้า-ออก")
+        print("9. Walk-in (เข้าใช้งานชั่วคราว)")
+        print("0. ออกจากระบบ")
+        print("====================================")
+        choice = input(
+            "เลือกเมนู: "
+        ).strip()
+
+        # 1. ADD MEMBER
+        if choice == "1":
+            try:
+                name = input("ชื่อสมาชิก: ").strip()
+                age = int(input("อายุ: "))
+                weight = float(input("น้ำหนัก (kg): "))
+                vip_input = input("สมัครเป็นสมาชิก VIP หรือไม่? (สมัคร/ไม่สมัคร): ").strip().lower()
+                is_vip = (vip_input == "สมัคร")
+                new_member_id = (max(member_data.keys()) + 1)
+                new_member = Member(new_member_id,name,age,weight,is_vip)
+                members_300.append(new_member)
+                member_data[new_member_id] = new_member
+                
+                print("\n================================")
+                print("       สมัครสมาชิกสำเร็จ!")
+                print("================================")
+                print(new_member)
+            except ValueError:
+                print(
+                    "❌ กรุณากรอกข้อมูลให้ถูกต้อง"
+                )
+        # 2. BOOK PACKAGE
+        elif choice == "2":
+            add_new_booking()
+        # 3. VIEW PACKAGES
+        elif choice == "3":
+            view_all_packages()
+        # 4. SEARCH BOOKING
+        elif choice == "4":
+            search_booking()
+        # 5. REPORT DASHBOARD
+        elif choice == "5":
+            dashboard_menu()
+        # 6. CHECK-IN
+        elif choice == "6":
+            check_in()
+        # 7. CHECK-OUT
+        elif choice == "7":
+            check_out()
+        # 8. ดูประวัติการเข้า-ออก
+        elif choice == "8":
+            view_checkin_history()
+        #9.Walk-in
+        elif choice == "9":
+            walk_in_checkin()
+        # 0. ออกจากระบบ
+        elif choice == "0":
+            print("\n====================================")
+            print("ขอบคุณที่ใช้ FITNESS GYM SYSTEM")
+            print("ออกจากระบบเรียบร้อย 👋")
+            print("====================================")
+            break
+       # เลือกเมนูผิด
+        else:
+          print("❌ กรุณาเลือกเมนู 1-9")
+
