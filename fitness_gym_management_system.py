@@ -324,3 +324,240 @@ q8_sql = client.query("""
 
 print("\nQUESTION 8 - SQL")
 display(q8_sql)
+
+# PART 10 : DATABASE TABLES + JOIN
+
+# MEMBERS
+members_df = pd.DataFrame([
+    {
+        "member_id": member.member_id,
+        "name": member.name,
+        "age": member.age,
+        "weight_kg": member.weight_kg,
+        "is_vip": int(member.is_vip)
+    }
+    for member in members_300
+])
+members_df.to_sql("members",conn,if_exists="replace",index=False)
+
+# PACKAGES
+packages_df = pd.DataFrame([
+    package.get_package_info()
+    for package in packages
+])
+packages_df.to_sql("packages",conn,if_exists="replace",index=False)
+
+# SERVICES
+services_df = pd.DataFrame({"service_id": range(1,len(services) + 1),"service_name": services})
+services_df.to_sql("services",conn,if_exists="replace",index=False)
+
+# CREATE MEMBERSHIP TABLE
+service_map = {service: i + 1
+               for i, service in enumerate(services)}
+bookings_df = membership_df.copy()
+bookings_df["service_id"] = (bookings_df["service_type"].map(service_map))
+bookings_df = bookings_df[
+    [
+        "booking_id",
+        "member_id",
+        "package_id",
+        "service_id",
+        "price",
+        "hours",
+        "booking_date",
+        "status"
+    ]
+]
+bookings_df.to_sql("membership_bookings",conn,if_exists="replace",index=False)
+
+# JOIN 4 TABLES
+join_result = pd.read_sql_query("""
+    SELECT
+        b.booking_id,
+        m.name
+        AS member_name,
+        CASE
+            WHEN m.is_vip = 1
+            THEN 'VIP'
+            ELSE 'General'
+        END
+        AS member_type,
+        p.package_name,
+        s.service_name,
+        b.price,
+        b.hours,
+        b.booking_date,
+        b.status
+    FROM membership_bookings b
+    JOIN members m
+        ON b.member_id = m.member_id
+    JOIN packages p
+        ON b.package_id = p.package_id
+    JOIN services s
+        ON b.service_id = s.service_id
+    ORDER BY b.booking_id
+""",conn)
+
+print("JOIN 4 TABLES สำเร็จ")
+display(join_result.head(10))
+
+vip_discount_sql = pd.read_sql_query(
+    """SELECT
+        b.booking_id,
+        m.name
+        AS member_name,
+        CASE
+            WHEN m.is_vip = 1
+            THEN 'VIP'
+            ELSE 'General'
+        END
+        AS member_type,
+        b.price
+        AS original_price,
+        CASE
+            WHEN m.is_vip = 1
+            THEN b.price * 0.10
+            ELSE 0
+        END
+        AS discount,
+        CASE
+            WHEN m.is_vip = 1
+            THEN b.price * 0.90
+            ELSE b.price
+        END
+        AS final_price
+    FROM membership_bookings b
+    JOIN members m
+        ON b.member_id = m.member_id
+    ORDER BY b.booking_id
+""", conn)
+
+
+display(vip_discount_sql.head(10))
+
+# PART 11 : DATA VISUALIZATION & BUSINESS INSIGHTS
+
+# GRAPH 1: Total Revenue by Service
+plt.figure(figsize=(8, 5))
+q2_pandas.plot(
+    kind="bar",
+    x="service_type",
+    y="total_revenue",
+    legend=False,
+    color="skyblue"
+)
+plt.title("Total Revenue by Service")
+plt.xlabel("Service Type")
+plt.ylabel("Total Revenue (Baht)")
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+
+# GRAPH 2: Total Bookings by Service
+plt.figure(figsize=(8, 5))
+q2_pandas.plot(
+    kind="bar",
+    x="service_type",
+    y="total_bookings",
+    legend=False,
+    color="orange"
+)
+plt.title("Total Bookings by Service")
+plt.xlabel("Service Type")
+plt.ylabel("Number of Bookings")
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+
+# GRAPH 3: Monthly Revenue Trend
+membership_df["booking_date"] = pd.to_datetime(
+    membership_df["booking_date"],
+    dayfirst=True,
+    errors="coerce"
+)
+monthly_revenue = (
+    membership_df
+    .groupby(membership_df["booking_date"].dt.to_period("M"))
+    ["price"]
+    .sum()
+)
+plt.figure(figsize=(8, 5))
+monthly_revenue.plot(
+    kind="line",
+    marker="o",
+    color="green"
+)
+plt.title("Monthly Revenue Trend")
+plt.xlabel("Month")
+plt.ylabel("Revenue (Baht)")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# --------------------------------------------
+# BUSINESS SUMMARY & INSIGHTS (สรุปผลเชิงธุรกิจ)
+# --------------------------------------------
+print("\n" + "="*50)
+print("          BUSINESS SUMMARY & INSIGHTS")
+print("="*50)
+
+print("""
+1. สรุปภาพรวมรายได้และการใช้บริการ (Revenue & Service Trends):
+   - บริการ Personal Training สร้างรายได้รวมและมีค่าเฉลี่ยรายได้ต่อการจองสูงที่สุด
+     เนื่องจากเป็นบริการแบบตัวต่อตัวที่มีราคาแพ็กเกจต่อหน่วยสูง
+   - บริการ Gym ทั่วไป และ Group Class มีจำนวนผู้เข้าใช้งาน (Bookings) ถี่ที่สุด
+     ซึ่งเป็นฐานลูกค้าหลักในการสร้าง Traffic ให้กับฟิตเนส
+
+2. พฤติกรรมและกลุ่มเป้าหมายลูกค้า (Customer Segmentation):
+   - ลูกค้าที่มีน้ำหนักมากกว่า 70 kg มีแนวโน้มจองบริการ Personal Training มากที่สุด
+     สะท้อนความต้องการเทรนเนอร์ดูแลการออกกำลังกายและควบคุมน้ำหนักแบบเข้มข้น
+   - การมอบส่วนลด VIP 10% ช่วยกระตุ้นการตัดสินใจซื้อแพ็กเกจราคาสูง (เช่น VIP 5,000 บาท) ได้ดี
+
+3. ข้อเสนอแนะเชิงบริหาร (Business Recommendations):
+   - Upselling Strategy: ควรจัดโปรโมชันดึงลูกค้าจาก Gym ปกติ ให้มาทดลอง Personal Training
+     โดยเจาะกลุ่มลูกค้าที่ต้องการลดน้ำหนักหรือเล่นเวทจริงจัง
+   - Capacity Management: ควรบริหารจัดการตารางเวลา Group Class และพื้นที่เล่น Gym
+     ในช่วงเวลา Peak Hours เพื่อลดความแออัดขณะเช็คอินใช้งาน
+""")
+print("="*50)
+
+# PART 12 : ERROR HANDLING
+def find_member(member_id):
+    try:
+        member_id = int(member_id)
+    except ValueError:
+        print("Member ID ต้องเป็นตัวเลข")
+        return None
+    if member_id not in member_data:
+        print(f"ไม่พบ Member ID: {member_id}")
+        return None
+    return member_data[member_id]
+def find_package(package_id):
+    try:
+        package_id = int(package_id)
+    except ValueError:
+        print("Package ID ต้องเป็นตัวเลข")
+        return None
+    for package in packages:
+        if (package.package_id== package_id):
+            return package
+    print(f"ไม่พบ Package ID: {package_id}")
+    return None
+def validate_hours(hours):
+    try:
+        hours = float(hours)
+    except ValueError:
+        print("จำนวนชั่วโมงต้องเป็นตัวเลข")
+        return False
+    if hours <= 0:
+        print("จำนวนชั่วโมงต้องมากกว่า 0")
+        return False
+    if hours > 12:
+        print("ไม่สามารถจองเกิน 12 ชั่วโมง")
+        return False
+        return True
+print("===== ERROR HANDLING TEST =====")
+find_member(999999)
+find_package(999999)
+validate_hours(-5)
+print(validate_hours(2))
