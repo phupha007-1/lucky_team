@@ -1059,7 +1059,7 @@ def main_menu():
                 new_member = Member(new_member_id,name,age,weight,is_vip)
                 members_300.append(new_member)
                 member_data[new_member_id] = new_member
-                
+
                 print("\n================================")
                 print("       สมัครสมาชิกสำเร็จ!")
                 print("================================")
@@ -1102,4 +1102,4 @@ def main_menu():
        # เลือกเมนูผิด
         else:
           print("❌ กรุณาเลือกเมนู 1-9")
-
+main_menu()
