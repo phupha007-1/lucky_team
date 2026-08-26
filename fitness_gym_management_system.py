@@ -229,4 +229,98 @@ display(q8_pandas)
 conn = sqlite3.connect("fitness_gym.db")
 membership_df.to_sql("gym_memberships",conn,if_exists="replace",index=False)
 print("บันทึกข้อมูลลง SQLite สำเร็จ")
-     
+
+# PART 9 : SQL ANALYSIS
+# QUESTION 1
+q1_sql = client.query("""
+    SELECT service_type, SUM(SAFE_CAST(price AS INT64)) AS total_revenue
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    GROUP BY service_type
+    ORDER BY total_revenue DESC
+    LIMIT 1""").to_dataframe()
+
+print("QUESTION 1 - SQL")
+display(q1_sql)
+
+# QUESTION 2
+q2_sql = client.query("""
+    SELECT service_type, COUNT(booking_id) AS total_bookings, SUM(SAFE_CAST(price AS INT64)) AS total_revenue
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    GROUP BY service_type
+    ORDER BY total_revenue DESC
+""").to_dataframe()
+
+print("\nQUESTION 2 - SQL")
+display(q2_sql)
+
+# QUESTION 3
+q3_sql = client.query("""
+    SELECT
+        service_type,
+        ROUND(AVG(SAFE_CAST(weight_kg AS FLOAT64)), 2) AS avg_weight
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    GROUP BY service_type
+    ORDER BY avg_weight DESC""").to_dataframe()
+
+print("\nQUESTION 3 - SQL")
+display(q3_sql)
+
+# QUESTION 4
+q4_sql = client.query("""
+    SELECT service_type,
+        ROUND(AVG(SAFE_CAST(price AS INT64)), 2) AS avg_revenue_per_booking
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    GROUP BY service_type
+    ORDER BY avg_revenue_per_booking DESC
+    LIMIT 1""").to_dataframe()
+
+print("\nQUESTION 4 - SQL")
+display(q4_sql)
+
+# QUESTION 5
+q5_sql = client.query("""
+    SELECT service_type,
+        SUM(SAFE_CAST(price AS INT64)) AS total_revenue,
+        ROUND((SUM(SAFE_CAST(price AS INT64)) / (SELECT SUM(SAFE_CAST(price AS INT64)) FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`)) * 100, 2) AS revenue_share_pct
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    GROUP BY service_type
+    ORDER BY revenue_share_pct DESC
+""").to_dataframe()
+
+print("\nQUESTION 5 - SQL")
+display(q5_sql)
+
+# QUESTION 6
+q6_sql = client.query("""
+    SELECT service_type,
+        MIN(SAFE_CAST(price AS INT64)) AS min_price,
+        MAX(SAFE_CAST(price AS INT64)) AS max_price
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    GROUP BY service_type""").to_dataframe()
+
+print("\nQUESTION 6 - SQL")
+display(q6_sql)
+
+# QUESTION 7
+q7_sql = client.query("""
+    SELECT service_type,
+        COUNT(*) AS booking_count
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    WHERE SAFE_CAST(weight_kg AS FLOAT64) > 70
+    GROUP BY service_type
+    ORDER BY booking_count DESC
+    LIMIT 1""").to_dataframe()
+
+print("\nQUESTION 7 - SQL")
+display(q7_sql)
+
+# QUESTION 8
+q8_sql = client.query("""
+    SELECT DISTINCT
+        service_type,
+        PERCENTILE_CONT(SAFE_CAST(price AS INT64), 0.5) OVER(PARTITION BY service_type) AS median_price
+    FROM `deadlinesurvivorr.gym_membership_data2.gym_membership_data2`
+    """).to_dataframe()
+
+print("\nQUESTION 8 - SQL")
+display(q8_sql)
